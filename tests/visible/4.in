@@ -1,0 +1,6 @@
+a = 2;
+b = 3;
+c = a + b;
+d = c + 4;
+print(d == 9);
+print(c > d);

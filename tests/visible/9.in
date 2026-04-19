@@ -1,0 +1,8 @@
+a = 4;
+
+if (a <= 4) {
+    print(a <= 4);
+    print(a > 4);
+} else {
+    print(false);
+}

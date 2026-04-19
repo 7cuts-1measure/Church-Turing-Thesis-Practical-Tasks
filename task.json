@@ -1,16 +1,16 @@
 {
-  "name": "task-name"
-  "pipeline_task_id": -1,
+  "name": "Optimizer",
+  "pipeline_task_id": 10,
   "submission_root": "teams",
   "scoring": {
-    "final_score_max": -1,
+    "final_score_max": 1000,
     "public": {
       "label": "Public",
-      "weight_per_test": -1
+      "weight_per_test": 20
     },
     "hidden": {
       "label": "Hidden",
-      "weight_per_test": -1
+      "weight_per_test": 28
     }
   }
 }

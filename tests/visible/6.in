@@ -1,0 +1,12 @@
+x = 5;
+y = read();
+
+if (x < 10) {
+    x = x + 10;
+    z = y + 1;
+} else {
+    z = y + 2;
+}
+
+print(y < 10);
+print(x >= 10);

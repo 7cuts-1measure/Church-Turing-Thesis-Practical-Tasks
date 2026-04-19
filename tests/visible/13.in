@@ -1,0 +1,9 @@
+x = read();
+
+if (x == 5) {
+    print(x == 5);
+    print(x != 5);
+    print(x < 6);
+} else {
+    print(false);
+}

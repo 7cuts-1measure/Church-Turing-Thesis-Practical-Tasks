@@ -1,0 +1,8 @@
+x = read();
+
+if (x >= 7) {
+    print(x >= 0);
+} else {
+    print(x >= 7);
+    print(x < 7);
+}
