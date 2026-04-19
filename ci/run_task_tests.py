@@ -20,11 +20,6 @@ def load_config(task_dir: Path) -> dict:
     return json.loads(config_path.read_text())
 
 
-def normalize_output(text: str) -> str:
-    lines = [line.rstrip() for line in text.splitlines()]
-    return "\n".join(lines).strip()
-
-
 def resolve_scoring_group(config: dict, visibility: str) -> tuple[str, int]:
     scoring = config.get("scoring", {})
     group = scoring.get(visibility, {})
@@ -232,60 +227,43 @@ def resolve_build_sandbox_backend(sandbox_backend: str) -> str:
 def run_make_test(
     submission_dir: Path,
     make_command: str,
-    test_input: Path,
-    expected_output: Path,
+    test_file: Path,
+    tests_root: Path,
     sandbox_backend: str,
     timeout_sec: int,
     memory_limit_mb: int,
-) -> tuple[str, float]:
+) -> float:
     with tempfile.TemporaryDirectory(prefix="task-test-out-") as temp_dir_name:
         temp_dir = Path(temp_dir_name)
-        output_file = temp_dir / f"{test_input.stem}.out"
 
         if sandbox_backend == "bwrap":
             sandbox_root = temp_dir / "sandbox"
             sandbox_workspace = sandbox_root / "workspace"
-            sandbox_input = sandbox_root / test_input.name
-            sandbox_output = sandbox_root / output_file.name
+            sandbox_tests_root = sandbox_root / "tests"
+            sandbox_test = sandbox_tests_root / test_file.relative_to(tests_root)
 
             shutil.copytree(submission_dir, sandbox_workspace)
-            shutil.copy2(test_input, sandbox_input)
+            shutil.copytree(tests_root, sandbox_tests_root)
 
             inner_command = [
                 make_command,
                 "test",
-                f"INPUT_FILE=/sandbox/{sandbox_input.name}",
-                f"OUTPUT_FILE=/sandbox/{sandbox_output.name}",
+                f"TEST_FILE=/sandbox/tests/{test_file.relative_to(tests_root)}",
             ]
             command = build_bwrap_test_command(sandbox_root, sandbox_workspace, inner_command)
             result, elapsed = run_command(command, sandbox_workspace, timeout_sec, memory_limit_mb)
-            ensure_success(result, f"make test for {test_input.name}")
-
-            if not sandbox_output.exists():
-                raise RuntimeError(f"make test did not create output file for {test_input.name}")
-
-            actual = normalize_output(sandbox_output.read_text(encoding="utf-8"))
+            ensure_success(result, f"make test for {test_file.name}")
         else:
             inner_command = [
                 make_command,
                 "test",
-                f"INPUT_FILE={test_input}",
-                f"OUTPUT_FILE={output_file}",
+                f"TEST_FILE={test_file}",
             ]
             command = build_command(submission_dir, sandbox_backend, inner_command)
             result, elapsed = run_command(command, submission_dir, timeout_sec, memory_limit_mb)
-            ensure_success(result, f"make test for {test_input.name}")
+            ensure_success(result, f"make test for {test_file.name}")
 
-            if not output_file.exists():
-                raise RuntimeError(f"make test did not create output file for {test_input.name}")
-
-            actual = normalize_output(output_file.read_text(encoding="utf-8"))
-
-        expected = normalize_output(expected_output.read_text(encoding="utf-8"))
-        if actual != expected:
-            raise RuntimeError("Output does not match expected answer.")
-
-        return actual, elapsed
+        return elapsed
 
 
 def main() -> int:
@@ -293,7 +271,6 @@ def main() -> int:
     parser.add_argument("--task-dir", required=True)
     parser.add_argument("--submission-dir", required=True)
     parser.add_argument("--tests-dir", required=True)
-    parser.add_argument("--answers-dir", required=True)
     parser.add_argument("--visibility", choices=["public", "hidden"], default="public")
     parser.add_argument("--json-output")
     parser.add_argument("--timeout-sec", type=int, default=5)
@@ -308,7 +285,6 @@ def main() -> int:
 
     submission_dir = Path(args.submission_dir).resolve()
     tests_dir = Path(args.tests_dir).resolve()
-    answers_dir = Path(args.answers_dir).resolve()
 
     if not submission_dir.exists():
         raise SystemExit(f"Missing submission directory: {submission_dir}")
@@ -316,8 +292,6 @@ def main() -> int:
         raise SystemExit(f"Missing Makefile in submission directory: {submission_dir}")
     if not tests_dir.exists():
         raise SystemExit(f"Missing tests directory: {tests_dir}")
-    if not answers_dir.exists():
-        raise SystemExit(f"Missing answers directory: {answers_dir}")
 
     group_name, test_weight = resolve_scoring_group(config, args.visibility)
     json_output = Path(args.json_output).resolve() if args.json_output else None
@@ -339,9 +313,10 @@ def main() -> int:
         args.memory_limit_mb,
     )
 
-    test_inputs = sorted(tests_dir.glob("*.in"))
-    if not test_inputs:
-        raise SystemExit(f"No input tests found in {tests_dir}")
+    test_files = sorted(tests_dir.glob("*.c"))
+    if not test_files:
+        raise SystemExit(f"No C tests found in {tests_dir}")
+    tests_root = tests_dir.parent
 
     is_public = args.visibility == "public"
     passed = 0
@@ -350,17 +325,13 @@ def main() -> int:
     passed_tests: list[str] = []
     failed_tests: list[str] = []
 
-    for test_input in test_inputs:
-        expected_output = answers_dir / f"{test_input.stem}.ans"
-        if not expected_output.exists():
-            raise SystemExit(f"Missing answer file: {expected_output}")
-
+    for test_file in test_files:
         try:
-            _, elapsed = run_make_test(
+            elapsed = run_make_test(
                 submission_dir,
                 make_command,
-                test_input,
-                expected_output,
+                test_file,
+                tests_root,
                 sandbox_backend,
                 args.timeout_sec,
                 args.memory_limit_mb,
@@ -368,16 +339,16 @@ def main() -> int:
             total_time += elapsed
             passed += 1
             if is_public:
-                passed_tests.append(test_input.stem)
-                print(f"[PASS] {test_input.stem} ({elapsed:.3f}s)")
+                passed_tests.append(test_file.stem)
+                print(f"[PASS] {test_file.stem} ({elapsed:.3f}s)")
         except Exception as exc:
             failed += 1
             if is_public:
-                failed_tests.append(test_input.stem)
-                print(f"[FAIL] {test_input.stem}")
+                failed_tests.append(test_file.stem)
+                print(f"[FAIL] {test_file.stem}")
                 print(str(exc))
 
-    total_tests = len(test_inputs)
+    total_tests = len(test_files)
     points_total = total_tests * test_weight
     points_awarded = passed * test_weight
 

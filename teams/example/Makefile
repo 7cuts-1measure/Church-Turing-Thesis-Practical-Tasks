@@ -1,9 +1,13 @@
-# Команда build должна собирать исполняемый файл с именем solution
-build:
-# Здесь должна быть команда для сборки решения, например:
-# g++ -o solution solution.cpp
+CC := gcc
+CFLAGS := -std=c11 -O2 -Wall -Wextra -pedantic -I.
 
-# Команда test должна запускать исполняемый файл solution с входным файлом и сохранять результат в выходной файл
-# make test INPUT_FILE=path/to/input.txt OUTPUT_FILE=path/to/output.txt
-test:
-	./solution ${INPUT_FILE} > ${OUTPUT_FILE}
+# Команда build должна собирать объектный файл решения.
+build:
+	$(CC) $(CFLAGS) -c machine_turing.c -o machine_turing.o
+
+# Команда test должна собирать и запускать конкретный test runner.
+# make test TEST_FILE=/path/to/test.c
+test: build
+	test -n "$(TEST_FILE)"
+	$(CC) $(CFLAGS) "$(TEST_FILE)" machine_turing.o -o test_runner
+	./test_runner
