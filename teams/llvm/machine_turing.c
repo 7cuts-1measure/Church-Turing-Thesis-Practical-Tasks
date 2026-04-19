@@ -11,14 +11,14 @@
 #define START_STATE 'q'
 #define END_STATE '!'
 
-#define INITIAL_TRANSITION_CAPACITY 5
+#define INITIAL_TRANSITION_CAPACITY 50
 
 TuringMachine* create_machine(const char *tape_initial) {
     TuringMachine *tm = (TuringMachine *) malloc(sizeof(TuringMachine));
-    tm->tape                 = (char *) malloc(INITIAL_TAPE_SIZE);
-    memset(tm->tape, '_', INITIAL_TAPE_SIZE);
-    memcpy(tm->tape, tape_initial, INITIAL_TAPE_SIZE);
-    tm->tape_size            = INITIAL_TAPE_SIZE;
+    tm->tape_size = strlen(tape_initial);
+    tm->tape                 = (char *) malloc(tm->tape_size);
+    strcpy(tm->tape, tape_initial);    
+
     tm->head                 = 0;
     tm->transitions          = malloc(sizeof(Transition) * INITIAL_TAPE_SIZE);
     tm->current_state        = START_STATE;
@@ -62,10 +62,12 @@ void apply_transition(TuringMachine *tm, Transition tr) {
     tm->head = tr.direction == 'L' ? tm->head - 1 :
                tr.direction == 'R' ? tm->head + 1 : tm->head;
 
-    if (tm->head > tm->tape_size) {
+    if (tm->head >= tm->tape_size) {
         int new_size = tm->tape_size * 2;
-        tm->tape = realloc(tm->tape, new_size * sizeof(char));
+        tm->tape = realloc(tm->tape, (new_size + 1) * sizeof(char));
         memset(tm->tape + tm->tape_size, '_', new_size - tm->tape_size);
+        tm->tape_size = new_size;
+        tm->tape[tm->tape_size] = '\0';
     }
     tm->current_state = tr.next_state;
 }
@@ -122,12 +124,7 @@ char *tape2cstr(const char *tape) {
 }
 
 char* process_string(const char *input) {
-    int tape_len = strlen(input) + 4;
-    char * tape = cstr2tape(input);
-    if (tape_len < INITIAL_TAPE_SIZE) {
-        tape = realloc(tape, INITIAL_TAPE_SIZE);
-        memset(tape + tape_len, '_', INITIAL_TAPE_SIZE - tape_len);
-    }
+    char *tape = cstr2tape(input);
 
     TuringMachine *tm = create_machine(tape);
     tm->head = 2;
