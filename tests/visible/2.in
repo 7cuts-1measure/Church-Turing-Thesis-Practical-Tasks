@@ -1,0 +1,10 @@
+P 1 R 2 Q 3
+f 2 g 2 h 1
+c d e
+Q(x_1, f(x_1, x_2), g(c, d))
+P(x_1) > Ax_1(Q(x_1, x_2, x_3) & P(g(x_1, x_2))))
+Q(P(c), f(d), h(e))
+k(g(c, x_1, x_2))
+q(x_1, x_2, x_3)
+Q(F(x_1, x_2), c, d)
+P(x)

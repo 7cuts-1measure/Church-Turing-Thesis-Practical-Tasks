@@ -1,0 +1,8 @@
+P 2 Q 1
+f 2 g 1
+a b
+(Ax_1 P(x_1, a) & Ex_2 Q(x_2))
+Ax_1 (P(x_1, a) | Q(g(x_1)))
+!(P(a, b) > Q(f(a, b)))
+((P(a, b) & Q(a)) | P(b, a))
+P(a, b) && Q(a)

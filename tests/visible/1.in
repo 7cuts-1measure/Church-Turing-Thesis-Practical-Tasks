@@ -1,0 +1,6 @@
+P 1 R 2 Q 3
+f 2 g 2 h 1
+c d e
+(Ax_2P(f(x_1, d))&Ex_1R(x_1, h(x_2)))
+Ay_2Q(y_2, c, e)
+Ex_3 (R(x_3, c) | P(x_3))

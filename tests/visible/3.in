@@ -1,0 +1,8 @@
+P 1 Q 2
+f 1
+c d
+P(c)
+Q(c, d)
+P(x_1)
+(P(c) & Q(c, d))
+P(x)
