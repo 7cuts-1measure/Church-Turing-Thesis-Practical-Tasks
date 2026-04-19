@@ -1,16 +1,34 @@
-# Submission Format
+# Станция Аврора
 
-Each team submits files only inside `teams/<team>/`.
+## Условие задачи
 
-Required contract for the solution:
-- `make build` must produce an executable named `solution`
-- `./solution <path-to-input-file>` must read input from that file
-- the program must write the answer to `stdout`
+Станция «Аврора» состоит из 𝑁 модулей, пронумерованных от 1 до 𝑁 . Каждый модуль может
+быть в состоянии ON (включён) или OFF (выключен). Существует 𝑀 ограничений трёх типов:
 
-The runner checks tests through:
+* DEP A B — зависимость: если модуль 𝐴 включён, то модуль 𝐵 тоже обязан быть
+  включён. У нас кислородный рециркулятор не может работать без энергоблока.
+* CONFLICT A B — конфликт: модули 𝐴 и 𝐵 не могут быть включены одновременно.
+  У нас два мощных реактора на одной линии питания вызывают перегрузку.
+* REQUIRE A — обязательный модуль: модуль 𝐴 должен быть включён в любой конфи­гурации. 
+  У нас основная система жизнеобеспечения не может быть отключена.
+  Необходимо определить, существует ли корректная конфигурация — такой набор состояний
+  модулей, при котором все 𝑀 ограничений выполнены одновременно. Если конфигурация суще­
+  ствует — вывести её. Если нет — сообщить, что конфигурация невозможна.
+
+## Формат решения
+
+Каждая команда отправляет решение в папке `teams/<team>/`.
+
+Необходимый билд решения:
+
+* `make build` должен создать исходник с именем `solution`
+* `./solution <path-to-input-file>` должен читать входные данные задачи
+* Решение выводится в stdout
+
+Тесты проверяются через:
 
 ```bash
 make test INPUT_FILE=path/to/input.in OUTPUT_FILE=path/to/output.ans
 ```
 
-So the `test` target in `Makefile` should run `./solution "$INPUT_FILE"` and redirect stdout to `OUTPUT_FILE`.
+Поэтому советуем сильно не менять test таргет в мэйкфайле

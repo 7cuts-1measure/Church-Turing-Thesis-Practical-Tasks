@@ -3,7 +3,7 @@ name: Church Tests
 on:
   pull_request_target:
     branches:
-      - "church-task-first"
+      - "church-task-aurora"
       - "church-task-analyzer"
       - "church-task-optimizer"
       - "church-task-causal"
