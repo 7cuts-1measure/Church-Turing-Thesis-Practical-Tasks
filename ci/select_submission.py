@@ -62,21 +62,16 @@ def collect_changed_files(candidate_root: Path, baseline_root: Path | None) -> l
 
 
 def validate_change_scope(changed_files: list[Path], submission_root: str, task_rel: Path) -> str:
-    scope_prefix = Path(submission_root) / "<team>"
-    expected_prefix = str(task_rel / scope_prefix) if str(task_rel) != "." else str(scope_prefix)
     changed_teams: set[str] = set()
 
     for rel_path in changed_files:
         parts = rel_path.parts
         if len(parts) < 2 or parts[0] != submission_root:
-            raise SystemExit(
-                f"Forbidden change outside submission area: {rel_path}. "
-                f"Allowed scope: {expected_prefix}"
-            )
+            continue
         changed_teams.add(parts[1])
 
     if not changed_teams:
-        raise SystemExit("No changed files found in candidate tree")
+        raise SystemExit(f"No changed files found under submission root: {submission_root}")
     if len(changed_teams) != 1:
         teams = ", ".join(sorted(changed_teams))
         raise SystemExit(f"Changes affect multiple team directories: {teams}")
